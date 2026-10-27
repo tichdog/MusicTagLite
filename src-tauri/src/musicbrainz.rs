@@ -7,7 +7,7 @@ use crate::error::{AppError, AppResult};
 use crate::models::MusicBrainzResult;
 
 const USER_AGENT: &str =
-    "MusicTagLite/0.1.0 (https://github.com/musictag-lite)";
+    "MusicTagLite/0.1.0 (https://github.com/tichdog/MusicTagLite)";
 const SEARCH_URL: &str = "https://musicbrainz.org/ws/2/recording";
 
 #[derive(Debug, Deserialize)]

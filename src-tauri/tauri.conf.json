@@ -32,7 +32,7 @@
     "targets": "all",
     "category": "Music",
     "shortDescription": "Minimal music tag editor",
-    "longDescription": "Edit title, artist, album, year, genre and track number of your music files without re-encoding audio.",
+    "longDescription": "Edit title, artist, album, lyrics, cover art and extended metadata of your music files without re-encoding audio.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

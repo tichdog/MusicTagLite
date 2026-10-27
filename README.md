@@ -27,7 +27,53 @@ A minimal, cross-platform desktop music tag editor built with Rust (Tauri), Reac
 
 - [Rust](https://rustup.rs/) (stable toolchain)
 - [Node.js](https://nodejs.org/) 20+
-- Linux only: [webkit2gtk](https://wiki.gnome.org/Projects/WebKit2GTK) and friends (`libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, …)
+
+### Windows
+
+- Install the **Visual Studio Build Tools 2022** with the
+  “Desktop development with C++” workload (MSVC + Windows SDK).
+- Install Rust with the MSVC toolchain:
+
+  ```powershell
+  winget install Rustlang.Rustup
+  rustup default stable-msvc
+  ```
+
+- WebView2 is preinstalled on Windows 10/11. Windows 7/8 need the
+  [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).
+
+### Linux
+
+Install the Tauri system dependencies for your distribution.
+
+Debian / Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install -y \
+  build-essential curl wget file \
+  libwebkit2gtk-4.1-dev libgtk-3-dev \
+  libayatana-appindicator3-dev librsvg2-dev \
+  libxdo-dev libssl-dev patchelf libfuse2
+```
+
+Fedora:
+
+```bash
+sudo dnf install \
+  webkit2gtk4.1-devel gtk3-devel \
+  libappindicator-gtk3-devel librsvg2-devel \
+  libxdo-devel openssl-devel patchelf fuse-libs
+```
+
+Arch Linux:
+
+```bash
+sudo pacman -S --needed \
+  base-devel curl wget file \
+  webkit2gtk-4.1 gtk3 libappindicator-gtk3 \
+  librsvg xdotool openssl patchelf fuse2
+```
 
 ## Development
 
@@ -42,12 +88,44 @@ npm run tauri dev
 
 ## Build
 
-```bash
+### Windows
+
+```powershell
+npm ci
 npm run tauri build
 ```
 
-This runs `npm run build` (TypeScript + Vite) and produces the desktop binary
-and installers under `src-tauri/target/release/bundle/`.
+Outputs:
+
+- `src-tauri/target/release/musictag-lite.exe`
+- `src-tauri/target/release/bundle/msi/*.msi`
+- `src-tauri/target/release/bundle/nsis/*-setup.exe`
+
+### Linux
+
+```bash
+npm ci
+npm run tauri build -- --bundles deb,appimage
+```
+
+Outputs:
+
+- `src-tauri/target/release/bundle/deb/*.deb`
+- `src-tauri/target/release/bundle/appimage/*.AppImage`
+
+Run the AppImage with `--appimage-extract-and-run` if FUSE is unavailable.
+
+> Build on the oldest Linux distribution you intend to support. AppImage/deb
+> binaries link against the glibc version of the build machine.
+
+### CI
+
+`.github/workflows/build.yml` builds Windows (MSI/NSIS) and Linux
+(deb/AppImage) installers on every push to `master`/`main`, every pull request,
+and on manual dispatch. The installers are uploaded as workflow artifacts.
+
+Builds are unsigned. For public releases, consider Windows code signing and
+publishing checksums for the Linux artifacts.
 
 ## Testing
 

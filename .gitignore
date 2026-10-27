@@ -20,3 +20,16 @@ src-tauri/gen
 
 # Test artifacts
 test-music/
+
+# Secrets and signing material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.mobileprovision
+*.provisionprofile
