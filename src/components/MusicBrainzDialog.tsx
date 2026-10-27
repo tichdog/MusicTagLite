@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { MusicBrainzResult } from "../types";
 import { searchMusicBrainz } from "../lib/api";
 import { readError } from "../lib/errors";
+import { useSettings } from "../settings";
 import { SearchIcon, SpinnerIcon, CloseIcon } from "./Icons";
 
 interface MusicBrainzDialogProps {
@@ -23,6 +24,7 @@ export function MusicBrainzDialog({
   onApply,
   onClose,
 }: MusicBrainzDialogProps) {
+  const { t } = useSettings();
   const initialQuery = buildQuery(initialTitle, initialArtist);
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<MusicBrainzResult[]>([]);
@@ -36,7 +38,7 @@ export function MusicBrainzDialog({
     const trimmed = value.trim();
     if (!trimmed) {
       setStatus("error");
-      setError("Enter a title, artist, or album to search.");
+      setError(t("mb.emptyQuery"));
       return;
     }
 
@@ -56,7 +58,7 @@ export function MusicBrainzDialog({
         return;
       }
       setStatus("error");
-      setError(readError(searchError));
+      setError(readError(searchError, t("errors.unexpected")));
     }
   }
 
@@ -107,15 +109,15 @@ export function MusicBrainzDialog({
       >
         <header className="dialog-head">
           <div className="dialog-heading">
-            <span className="dialog-kicker">Autofill</span>
-            <h2 id="musicbrainz-title">MusicBrainz lookup</h2>
-            <p>Pick a recording to fill the title, artist, album, year and track.</p>
+            <span className="dialog-kicker">{t("mb.kicker")}</span>
+            <h2 id="musicbrainz-title">{t("mb.title")}</h2>
+            <p>{t("mb.hint")}</p>
           </div>
           <button
             type="button"
             className="icon-button"
             onClick={onClose}
-            aria-label="Close MusicBrainz lookup"
+            aria-label={t("mb.close")}
           >
             <CloseIcon width={17} height={17} />
           </button>
@@ -123,7 +125,7 @@ export function MusicBrainzDialog({
 
         <form className="mb-search" onSubmit={handleSubmit}>
           <label className="sr-only" htmlFor="mb-query">
-            Search MusicBrainz
+            {t("mb.searchAria")}
           </label>
           <input
             ref={inputRef}
@@ -131,7 +133,7 @@ export function MusicBrainzDialog({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Artist, title, or album"
+            placeholder={t("mb.placeholder")}
             spellCheck={false}
             autoComplete="off"
           />
@@ -145,13 +147,13 @@ export function MusicBrainzDialog({
             ) : (
               <SearchIcon width={16} height={16} />
             )}
-            Search
+            {t("mb.search")}
           </button>
         </form>
 
         <div className="mb-results" aria-live="polite">
           {status === "loading" && (
-            <div className="mb-skeletons" aria-label="Searching MusicBrainz">
+            <div className="mb-skeletons" aria-label={t("mb.searching")}>
               {[0, 1, 2].map((index) => (
                 <div key={index} className="mb-skeleton" />
               ))}
@@ -160,22 +162,22 @@ export function MusicBrainzDialog({
 
           {status === "error" && (
             <div className="mb-message mb-message--error">
-              <strong>Search failed</strong>
+              <strong>{t("mb.searchFailed")}</strong>
               <span>{error}</span>
             </div>
           )}
 
           {status === "idle" && (
             <div className="mb-message">
-              <strong>Find the right release</strong>
-              <span>Start with an artist and title, then narrow it down.</span>
+              <strong>{t("mb.idleTitle")}</strong>
+              <span>{t("mb.idleHint")}</span>
             </div>
           )}
 
           {status === "done" && results.length === 0 && (
             <div className="mb-message">
-              <strong>No matches found</strong>
-              <span>Try a shorter query, or remove the album name.</span>
+              <strong>{t("mb.noResultsTitle")}</strong>
+              <span>{t("mb.noResultsHint")}</span>
             </div>
           )}
 
@@ -184,7 +186,9 @@ export function MusicBrainzDialog({
               const meta = [
                 result.album,
                 result.year === null ? null : String(result.year),
-                result.track === null ? null : `Track ${result.track}`,
+                result.track === null
+                  ? null
+                  : t("mb.track", { count: result.track }),
                 result.country,
               ].filter((item): item is string => Boolean(item));
 
@@ -201,21 +205,25 @@ export function MusicBrainzDialog({
                   <span className="mb-result-text">
                     <span className="mb-result-title">{result.title}</span>
                     <span className="mb-result-artist">
-                      {result.artist || "Unknown artist"}
+                      {result.artist || t("common.unknownArtist")}
                     </span>
                     {meta.length > 0 && (
                       <span className="mb-result-meta">{meta.join(" · ")}</span>
                     )}
                   </span>
-                  <span className="mb-use">Use</span>
+                  <span className="mb-use">{t("mb.use")}</span>
                 </button>
               );
             })}
         </div>
 
         <footer className="dialog-foot">
-          <span>Data from MusicBrainz, licensed under CC0.</span>
-          <span>{results.length > 0 ? `${results.length} results` : ""}</span>
+          <span>{t("mb.attribution")}</span>
+          <span>
+            {results.length > 0
+              ? t("mb.results", { count: results.length })
+              : ""}
+          </span>
         </footer>
       </div>
     </div>

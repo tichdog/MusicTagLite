@@ -10,6 +10,20 @@ pub struct TagFields {
     pub year: Option<u16>,
     pub genre: String,
     pub track: Option<u32>,
+    pub album_artist: String,
+    pub track_total: Option<u32>,
+    pub disc: Option<u32>,
+    pub disc_total: Option<u32>,
+    pub composer: String,
+    pub comment: String,
+    pub lyrics: String,
+    pub bpm: Option<u32>,
+    pub isrc: String,
+    pub copyright: String,
+    pub language: String,
+    pub grouping: String,
+    pub label: String,
+    pub catalog_number: String,
 }
 
 /// A loaded audio file plus its current metadata.
@@ -45,6 +59,27 @@ pub struct LoadTracksResult {
 pub struct SaveTrackRequest {
     pub path: String,
     pub tags: TagFields,
+    #[serde(default)]
+    pub cover: Option<CoverChange>,
+}
+
+/// A pending artwork change submitted together with the tag fields.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "action", rename_all = "camelCase")]
+pub enum CoverChange {
+    /// Replace the front cover with the image at `path`.
+    Set { path: String },
+    /// Remove embedded artwork from the primary tag.
+    Remove,
+}
+
+/// Artwork returned to the frontend as a data URL for previewing.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoverArt {
+    pub mime: String,
+    pub data_url: String,
+    pub size_bytes: u64,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -1,4 +1,5 @@
 import type { ToastItem } from "../types";
+import { useSettings } from "../settings";
 import { AlertIcon, CheckIcon, CloseIcon, InfoIcon } from "./Icons";
 
 interface ToastsProps {
@@ -7,6 +8,8 @@ interface ToastsProps {
 }
 
 export function Toasts({ toasts, onDismiss }: ToastsProps) {
+  const { t } = useSettings();
+
   return (
     <div className="toast-stack" aria-live="polite" aria-atomic="false">
       {toasts.map((toast) => {
@@ -30,7 +33,7 @@ export function Toasts({ toasts, onDismiss }: ToastsProps) {
               type="button"
               className="toast-close"
               onClick={() => onDismiss(toast.id)}
-              aria-label="Dismiss notification"
+              aria-label={t("common.dismiss")}
             >
               <CloseIcon width={14} height={14} />
             </button>

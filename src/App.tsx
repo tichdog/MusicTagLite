@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TagFields, ToastItem, ToastKind, Track } from "./types";
+import type {
+  CoverChange,
+  TagFields,
+  ToastItem,
+  ToastKind,
+  Track,
+} from "./types";
 import {
   chooseAudioFiles,
   isSupportedAudioPath,
@@ -10,6 +16,7 @@ import {
 } from "./lib/api";
 import { basename } from "./lib/format";
 import { readError } from "./lib/errors";
+import { useSettings } from "./settings";
 import { Sidebar } from "./components/Sidebar";
 import { EmptyState } from "./components/EmptyState";
 import { TagEditor } from "./components/TagEditor";
@@ -17,6 +24,7 @@ import { Toasts } from "./components/Toasts";
 import { PlusIcon } from "./components/Icons";
 
 export default function App() {
+  const { t } = useSettings();
   const [tracks, setTracks] = useState<Track[]>([]);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -62,10 +70,7 @@ export default function App() {
       const skipped = unique.length - supported.length;
 
       if (supported.length === 0) {
-        addToast(
-          "error",
-          "No supported audio files found. Use MP3, FLAC, OGG, M4A or WAV.",
-        );
+        addToast("error", t("app.noSupported"));
         return;
       }
 
@@ -74,7 +79,7 @@ export default function App() {
       );
 
       if (fresh.length === 0) {
-        addToast("info", "Those tracks are already in the list.");
+        addToast("info", t("app.alreadyAdded"));
         return;
       }
 
@@ -93,51 +98,63 @@ export default function App() {
           addToast(
             "success",
             result.tracks.length === 1
-              ? "Added 1 track."
-              : `Added ${result.tracks.length} tracks.`,
+              ? t("app.addedOne")
+              : t("app.addedMany", { count: result.tracks.length }),
           );
         }
 
         for (const fileError of result.errors.slice(0, 2)) {
           addToast(
             "error",
-            `${basename(fileError.path)}: ${fileError.message}`,
+            t("app.fileError", {
+              name: basename(fileError.path),
+              message: fileError.message,
+            }),
           );
         }
         if (result.errors.length > 2) {
           addToast(
             "error",
-            `${result.errors.length - 2} more files could not be read.`,
+            t("app.moreErrors", { count: result.errors.length - 2 }),
           );
         }
 
         if (skipped > 0) {
           addToast(
             "info",
-            `Skipped ${skipped} unsupported ${
-              skipped === 1 ? "file" : "files"
-            }.`,
+            skipped === 1
+              ? t("app.skippedOne")
+              : t("app.skippedMany", { count: skipped }),
           );
         }
       } catch (error) {
-        addToast("error", `Could not load files — ${readError(error)}`);
+        addToast(
+          "error",
+          t("app.loadFailed", {
+            message: readError(error, t("errors.unexpected")),
+          }),
+        );
       } finally {
         setIsLoading(false);
       }
     },
-    [addToast],
+    [addToast, t],
   );
 
   const handleAdd = useCallback(async () => {
     try {
-      const paths = await chooseAudioFiles();
+      const paths = await chooseAudioFiles(
+        t("dialog.addFiles"),
+        t("dialog.audioFiles"),
+        t("dialog.desktopOnly"),
+      );
       if (paths.length > 0) {
         await addPaths(paths);
       }
     } catch (error) {
-      addToast("error", readError(error));
+      addToast("error", readError(error, t("errors.unexpected")));
     }
-  }, [addPaths, addToast]);
+  }, [addPaths, addToast, t]);
 
   useEffect(() => {
     let disposed = false;
@@ -158,7 +175,12 @@ export default function App() {
       })
       .catch((error) => {
         if (!disposed) {
-          addToast("error", `Drag and drop unavailable — ${readError(error)}`);
+          addToast(
+            "error",
+            t("app.dragUnavailable", {
+              message: readError(error, t("errors.unexpected")),
+            }),
+          );
         }
       });
 
@@ -166,7 +188,7 @@ export default function App() {
       disposed = true;
       unlisten?.();
     };
-  }, [addPaths, addToast]);
+  }, [addPaths, addToast, t]);
 
   useEffect(() => {
     if (tracks.length === 0) {
@@ -191,35 +213,30 @@ export default function App() {
       if (path === selectedPath) {
         return;
       }
-      if (
-        isDirty &&
-        !window.confirm("You have unsaved changes. Discard them?")
-      ) {
+      if (isDirty && !window.confirm(t("app.confirmDiscard"))) {
         return;
       }
       setSelectedPath(path);
       setIsDirty(false);
     },
-    [isDirty, selectedPath],
+    [isDirty, selectedPath, t],
   );
 
-  const handleSave = useCallback(async (path: string, tags: TagFields) => {
-    const updated = await saveTrack({ path, tags });
-    setTracks((current) =>
-      current.map((track) => (track.path === path ? updated : track)),
-    );
-  }, []);
+  const handleSave = useCallback(
+    async (path: string, tags: TagFields, cover?: CoverChange) => {
+      const updated = await saveTrack({ path, tags, cover });
+      setTracks((current) =>
+        current.map((track) => (track.path === path ? updated : track)),
+      );
+    },
+    [],
+  );
 
   const handleRemove = useCallback(() => {
     if (!selectedTrack) {
       return;
     }
-    if (
-      isDirty &&
-      !window.confirm(
-        "This track has unsaved changes. Remove it from the list anyway?",
-      )
-    ) {
+    if (isDirty && !window.confirm(t("app.confirmRemove"))) {
       return;
     }
 
@@ -233,7 +250,7 @@ export default function App() {
     );
     setSelectedPath(nextTrack?.path ?? null);
     setIsDirty(false);
-  }, [isDirty, selectedTrack, tracks]);
+  }, [isDirty, selectedTrack, t, tracks]);
 
   return (
     <div className={`app-shell${isDragActive ? " is-dragging" : ""}`}>
@@ -266,8 +283,8 @@ export default function App() {
             <span className="drop-overlay-icon">
               <PlusIcon width={28} height={28} />
             </span>
-            <strong>Drop to add tracks</strong>
-            <span>MP3, FLAC, OGG, M4A or WAV</span>
+            <strong>{t("app.dropTitle")}</strong>
+            <span>{t("app.formatsShort")}</span>
           </div>
         </div>
       )}
@@ -275,9 +292,7 @@ export default function App() {
       <Toasts toasts={toasts} onDismiss={dismissToast} />
 
       {!isTauriRuntime() && (
-        <div className="browser-note">
-          Browser preview — file access is available in the desktop app.
-        </div>
+        <div className="browser-note">{t("app.browserNote")}</div>
       )}
     </div>
   );

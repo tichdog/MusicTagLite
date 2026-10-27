@@ -5,6 +5,9 @@ A minimal, cross-platform desktop music tag editor built with Rust (Tauri), Reac
 ## Features
 
 - Edit title, artist, album, year, genre and track number of audio files.
+- Extended metadata: album artist, track/disc totals, composer, comment, BPM, ISRC, copyright, language, grouping, label and catalog number.
+- Lyrics editor for unsynchronized lyrics (USLT / LYRICS / ©lyr).
+- Embedded cover art: preview, replace and remove front artwork (PNG, JPEG, GIF, BMP, TIFF; up to 10 MB).
 - Tags are written **directly into the original file** — audio is never re-encoded.
 - Supported formats:
 
@@ -13,10 +16,12 @@ A minimal, cross-platform desktop music tag editor built with Rust (Tauri), Reac
   | MP3 | ID3v2 (with ID3v1 kept in sync) |
   | FLAC / OGG / Opus / Speex | Vorbis comments |
   | M4A / MP4 | MP4 `ilst` atoms |
-  | WAV / AIFF | RIFF INFO / AIFF text chunks (WAV) |
+  | WAV | ID3v2 (RIFF INFO kept in sync) |
 
 - Optional MusicBrainz autofill (search recordings and apply metadata in one click).
 - Drag & drop or picker-based file loading.
+- Interface language: English or Russian (chosen in the sidebar, remembered between launches).
+- Color theme: dark, light, or follow the operating system.
 
 ## Prerequisites
 
@@ -59,6 +64,10 @@ Tag read/write round-trip tests run against generated audio fixtures via the
 - On load, the primary tag is read, falling back to the first available tag.
 - On save, the primary tag is updated (created when missing) and secondary tags
   (e.g. ID3v1 for MP3, RIFF INFO for WAV) are kept in sync when present.
+- Lyrics are stored as ID3v2 USLT for MP3/WAV, `LYRICS` for Vorbis comments and
+  `©lyr` for MP4.
+- Cover art is read from the front-cover picture (or the first available
+  picture) and written as a standard embedded picture for each format.
 - Fields that are left empty are cleared from the file.
 - MusicBrainz queries use the official Web Service and respect its rate limits
   (a descriptive `User-Agent` is sent).

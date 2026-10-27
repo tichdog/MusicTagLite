@@ -1,10 +1,45 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0c0e13" />
     <title>MusicTag Lite</title>
+    <script>
+      (function () {
+        try {
+          var language = localStorage.getItem("musictag.language");
+          if (language !== "en" && language !== "ru") {
+            language =
+              (navigator.language || "en").toLowerCase().indexOf("ru") === 0
+                ? "ru"
+                : "en";
+          }
+          document.documentElement.lang = language;
+
+          var preference = localStorage.getItem("musictag.theme");
+          if (
+            preference !== "dark" &&
+            preference !== "light" &&
+            preference !== "system"
+          ) {
+            preference = "dark";
+          }
+          var dark =
+            preference === "dark" ||
+            (preference === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var resolved = dark ? "dark" : "light";
+          document.documentElement.dataset.theme = resolved;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute("content", dark ? "#0c0e13" : "#f3f4f8");
+          }
+        } catch (error) {
+          /* Preferences are optional. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

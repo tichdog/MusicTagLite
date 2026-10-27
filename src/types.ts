@@ -5,6 +5,20 @@ export interface TagFields {
   year: number | null;
   genre: string;
   track: number | null;
+  albumArtist: string;
+  trackTotal: number | null;
+  disc: number | null;
+  discTotal: number | null;
+  composer: string;
+  comment: string;
+  lyrics: string;
+  bpm: number | null;
+  isrc: string;
+  copyright: string;
+  language: string;
+  grouping: string;
+  label: string;
+  catalogNumber: string;
 }
 
 export interface Track {
@@ -27,9 +41,20 @@ export interface LoadTracksResult {
   errors: FileLoadError[];
 }
 
+export type CoverChange =
+  | { action: "set"; path: string }
+  | { action: "remove" };
+
+export interface CoverArt {
+  mime: string;
+  dataUrl: string;
+  sizeBytes: number;
+}
+
 export interface SaveTrackRequest {
   path: string;
   tags: TagFields;
+  cover?: CoverChange;
 }
 
 export interface MusicBrainzResult {
@@ -58,4 +83,18 @@ export interface TagDraft {
   year: string;
   genre: string;
   track: string;
+  albumArtist: string;
+  trackTotal: string;
+  disc: string;
+  discTotal: string;
+  composer: string;
+  comment: string;
+  lyrics: string;
+  bpm: string;
+  isrc: string;
+  copyright: string;
+  language: string;
+  grouping: string;
+  label: string;
+  catalogNumber: string;
 }

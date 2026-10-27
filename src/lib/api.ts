@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type {
+  CoverArt,
   LoadTracksResult,
   MusicBrainzResult,
   SaveTrackRequest,
@@ -18,6 +19,16 @@ export const AUDIO_EXTENSIONS = [
   "wav",
 ] as const;
 
+export const IMAGE_EXTENSIONS = [
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "bmp",
+  "tif",
+  "tiff",
+] as const;
+
 export function isTauriRuntime(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
@@ -27,18 +38,22 @@ export function isSupportedAudioPath(path: string): boolean {
   return (AUDIO_EXTENSIONS as readonly string[]).includes(extension);
 }
 
-export async function chooseAudioFiles(): Promise<string[]> {
+export async function chooseAudioFiles(
+  title: string,
+  filterName: string,
+  unavailableMessage = "The file picker is only available in the desktop app.",
+): Promise<string[]> {
   if (!isTauriRuntime()) {
-    throw new Error("The file picker is only available in the desktop app.");
+    throw new Error(unavailableMessage);
   }
 
   const selection = await open({
     multiple: true,
     directory: false,
-    title: "Add music files",
+    title,
     filters: [
       {
-        name: "Audio files",
+        name: filterName,
         extensions: [...AUDIO_EXTENSIONS],
       },
     ],
@@ -51,12 +66,48 @@ export async function chooseAudioFiles(): Promise<string[]> {
   return Array.isArray(selection) ? selection : [selection];
 }
 
+export async function chooseImageFile(
+  title: string,
+  filterName: string,
+  unavailableMessage = "The file picker is only available in the desktop app.",
+): Promise<string | null> {
+  if (!isTauriRuntime()) {
+    throw new Error(unavailableMessage);
+  }
+
+  const selection = await open({
+    multiple: false,
+    directory: false,
+    title,
+    filters: [
+      {
+        name: filterName,
+        extensions: [...IMAGE_EXTENSIONS],
+      },
+    ],
+  });
+
+  if (selection === null) {
+    return null;
+  }
+
+  return Array.isArray(selection) ? (selection[0] ?? null) : selection;
+}
+
 export async function loadTracks(paths: string[]): Promise<LoadTracksResult> {
   return invoke<LoadTracksResult>("load_tracks", { paths });
 }
 
 export async function saveTrack(request: SaveTrackRequest): Promise<Track> {
   return invoke<Track>("save_track", { request });
+}
+
+export async function readCover(path: string): Promise<CoverArt | null> {
+  return invoke<CoverArt | null>("read_cover", { path });
+}
+
+export async function previewImage(path: string): Promise<CoverArt> {
+  return invoke<CoverArt>("preview_image", { path });
 }
 
 export async function searchMusicBrainz(

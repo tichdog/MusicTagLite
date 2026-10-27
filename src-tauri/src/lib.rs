@@ -11,6 +11,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::load_tracks,
             commands::save_track,
+            commands::read_cover,
+            commands::preview_image,
             commands::search_musicbrainz
         ])
         .run(tauri::generate_context!())

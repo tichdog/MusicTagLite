@@ -32,8 +32,8 @@ export function trackHeading(track: Track): string {
   return track.tags.title.trim() || track.fileName;
 }
 
-export function trackSubheading(track: Track): string {
-  return track.tags.artist.trim() || "Unknown artist";
+export function trackSubheading(track: Track, unknownArtist: string): string {
+  return track.tags.artist.trim() || unknownArtist;
 }
 
 export function draftFromTags(tags: TagFields): TagDraft {
@@ -44,6 +44,20 @@ export function draftFromTags(tags: TagFields): TagDraft {
     year: tags.year === null ? "" : String(tags.year),
     genre: tags.genre,
     track: tags.track === null ? "" : String(tags.track),
+    albumArtist: tags.albumArtist,
+    trackTotal: tags.trackTotal === null ? "" : String(tags.trackTotal),
+    disc: tags.disc === null ? "" : String(tags.disc),
+    discTotal: tags.discTotal === null ? "" : String(tags.discTotal),
+    composer: tags.composer,
+    comment: tags.comment,
+    lyrics: tags.lyrics,
+    bpm: tags.bpm === null ? "" : String(tags.bpm),
+    isrc: tags.isrc,
+    copyright: tags.copyright,
+    language: tags.language,
+    grouping: tags.grouping,
+    label: tags.label,
+    catalogNumber: tags.catalogNumber,
   };
 }
 
@@ -54,13 +68,65 @@ export function draftEqualsTags(draft: TagDraft, tags: TagFields): boolean {
     draft.album === tags.album &&
     draft.genre === tags.genre &&
     draft.year === (tags.year === null ? "" : String(tags.year)) &&
-    draft.track === (tags.track === null ? "" : String(tags.track))
+    draft.track === (tags.track === null ? "" : String(tags.track)) &&
+    draft.albumArtist === tags.albumArtist &&
+    draft.trackTotal === (tags.trackTotal === null ? "" : String(tags.trackTotal)) &&
+    draft.disc === (tags.disc === null ? "" : String(tags.disc)) &&
+    draft.discTotal ===
+      (tags.discTotal === null ? "" : String(tags.discTotal)) &&
+    draft.composer === tags.composer &&
+    draft.comment === tags.comment &&
+    draft.lyrics === tags.lyrics &&
+    draft.bpm === (tags.bpm === null ? "" : String(tags.bpm)) &&
+    draft.isrc === tags.isrc &&
+    draft.copyright === tags.copyright &&
+    draft.language === tags.language &&
+    draft.grouping === tags.grouping &&
+    draft.label === tags.label &&
+    draft.catalogNumber === tags.catalogNumber
   );
 }
 
+export type TagFieldError =
+  | "year"
+  | "track"
+  | "trackTotal"
+  | "disc"
+  | "discTotal"
+  | "bpm";
+
 export interface DraftValidation {
   fields: TagFields | null;
-  errors: Partial<Record<"year" | "track", string>>;
+  errors: Partial<Record<TagFieldError, TagFieldError>>;
+}
+
+const TRACK_LIMIT = 9999;
+const BPM_LIMIT = 999;
+
+function parseNumeric(
+  value: string,
+  field: TagFieldError,
+  errors: DraftValidation["errors"],
+  min: number,
+  max: number,
+): number | null {
+  const text = value.trim();
+  if (text.length === 0) {
+    return null;
+  }
+
+  if (!/^\d{1,4}$/.test(text)) {
+    errors[field] = field;
+    return null;
+  }
+
+  const parsed = Number(text);
+  if (parsed < min || parsed > max) {
+    errors[field] = field;
+    return null;
+  }
+
+  return parsed;
 }
 
 export function validateDraft(draft: TagDraft): DraftValidation {
@@ -70,21 +136,29 @@ export function validateDraft(draft: TagDraft): DraftValidation {
   let year: number | null = null;
   if (yearText.length > 0) {
     if (!/^\d{1,4}$/.test(yearText)) {
-      errors.year = "Enter a year from 0 to 9999.";
+      errors.year = "year";
     } else {
       year = Number(yearText);
     }
   }
 
-  const trackText = draft.track.trim();
-  let track: number | null = null;
-  if (trackText.length > 0) {
-    if (!/^\d{1,4}$/.test(trackText) || Number(trackText) === 0) {
-      errors.track = "Track number must be between 1 and 9999.";
-    } else {
-      track = Number(trackText);
-    }
-  }
+  const track = parseNumeric(draft.track, "track", errors, 1, TRACK_LIMIT);
+  const trackTotal = parseNumeric(
+    draft.trackTotal,
+    "trackTotal",
+    errors,
+    1,
+    TRACK_LIMIT,
+  );
+  const disc = parseNumeric(draft.disc, "disc", errors, 1, TRACK_LIMIT);
+  const discTotal = parseNumeric(
+    draft.discTotal,
+    "discTotal",
+    errors,
+    1,
+    TRACK_LIMIT,
+  );
+  const bpm = parseNumeric(draft.bpm, "bpm", errors, 1, BPM_LIMIT);
 
   return {
     fields:
@@ -97,6 +171,20 @@ export function validateDraft(draft: TagDraft): DraftValidation {
             year,
             genre: draft.genre.trim(),
             track,
+            albumArtist: draft.albumArtist.trim(),
+            trackTotal,
+            disc,
+            discTotal,
+            composer: draft.composer.trim(),
+            comment: draft.comment,
+            lyrics: draft.lyrics,
+            bpm,
+            isrc: draft.isrc.trim(),
+            copyright: draft.copyright.trim(),
+            language: draft.language.trim(),
+            grouping: draft.grouping.trim(),
+            label: draft.label.trim(),
+            catalogNumber: draft.catalogNumber.trim(),
           },
     errors,
   };

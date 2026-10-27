@@ -1,4 +1,7 @@
-export function readError(error: unknown): string {
+export function readError(
+  error: unknown,
+  fallback = "An unexpected error occurred.",
+): string {
   if (typeof error === "string" && error.trim().length > 0) {
     return error;
   }
@@ -13,5 +16,5 @@ export function readError(error: unknown): string {
   ) {
     return error.message;
   }
-  return "An unexpected error occurred.";
+  return fallback;
 }

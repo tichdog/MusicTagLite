@@ -1,5 +1,7 @@
 use crate::error::AppError;
-use crate::models::{LoadTracksResult, MusicBrainzResult, SaveTrackRequest, Track};
+use crate::models::{
+    CoverArt, LoadTracksResult, MusicBrainzResult, SaveTrackRequest, Track,
+};
 use crate::{musicbrainz, tags};
 
 /// Loads one or more files in a blocking worker so large files do not stall the
@@ -18,6 +20,22 @@ pub async fn save_track(request: SaveTrackRequest) -> Result<Track, AppError> {
     tauri::async_runtime::spawn_blocking(move || tags::save_track(&request))
         .await
         .map_err(|error| AppError::Message(format!("Saving the file failed: {error}")))?
+}
+
+/// Reads embedded artwork from the primary tag, if any.
+#[tauri::command]
+pub async fn read_cover(path: String) -> Result<Option<CoverArt>, AppError> {
+    tauri::async_runtime::spawn_blocking(move || tags::read_cover(path))
+        .await
+        .map_err(|error| AppError::Message(format!("Loading artwork failed: {error}")))?
+}
+
+/// Reads a standalone image so the UI can preview a pending cover change.
+#[tauri::command]
+pub async fn preview_image(path: String) -> Result<CoverArt, AppError> {
+    tauri::async_runtime::spawn_blocking(move || tags::preview_image(path))
+        .await
+        .map_err(|error| AppError::Message(format!("Loading image failed: {error}")))?
 }
 
 /// Searches MusicBrainz for recordings matching the supplied free-text query.

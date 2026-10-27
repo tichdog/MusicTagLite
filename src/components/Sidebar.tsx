@@ -1,6 +1,8 @@
 import type { Track } from "../types";
 import { formatLabel, trackHeading, trackSubheading } from "../lib/format";
+import { useSettings } from "../settings";
 import { MusicIcon, PlusIcon, ShieldIcon, SpinnerIcon } from "./Icons";
+import { Preferences } from "./Preferences";
 
 interface SidebarProps {
   tracks: Track[];
@@ -17,6 +19,9 @@ export function Sidebar({
   onAdd,
   onSelect,
 }: SidebarProps) {
+  const { t } = useSettings();
+  const unknownArtist = t("common.unknownArtist");
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -40,19 +45,21 @@ export function Sidebar({
         ) : (
           <PlusIcon width={17} height={17} />
         )}
-        <span>{isLoading ? "Adding tracks…" : "Add tracks"}</span>
+        <span>
+          {isLoading ? t("sidebar.adding") : t("sidebar.addTracks")}
+        </span>
       </button>
 
       <div className="list-heading">
-        <span>Tracks</span>
+        <span>{t("sidebar.tracks")}</span>
         <span className="track-count">{tracks.length}</span>
       </div>
 
       <div className="track-list" role="list">
         {tracks.length === 0 ? (
           <div className="track-list-empty">
-            <span>Nothing here yet.</span>
-            <span>Add a few audio files to begin.</span>
+            <span>{t("sidebar.emptyTitle")}</span>
+            <span>{t("sidebar.emptyHint")}</span>
           </div>
         ) : (
           tracks.map((track) => {
@@ -76,7 +83,9 @@ export function Sidebar({
                 </span>
                 <span className="track-row-text">
                   <span className="track-row-title">{trackHeading(track)}</span>
-                  <span className="track-row-sub">{trackSubheading(track)}</span>
+                  <span className="track-row-sub">
+                    {trackSubheading(track, unknownArtist)}
+                  </span>
                 </span>
                 {track.tags.year !== null && (
                   <span className="track-row-year">{track.tags.year}</span>
@@ -87,9 +96,11 @@ export function Sidebar({
         )}
       </div>
 
+      <Preferences />
+
       <div className="sidebar-footer">
         <ShieldIcon width={15} height={15} />
-        <span>Tags are written directly to your files</span>
+        <span>{t("sidebar.footer")}</span>
       </div>
     </aside>
   );
